@@ -96,8 +96,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       with:
         args: >
-          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
-          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION || 'ashrith-devison' }}
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY || 'appointment-management-systems-backend-core' }}
 
   pr-feedback:
     name: PR Quality Feedback

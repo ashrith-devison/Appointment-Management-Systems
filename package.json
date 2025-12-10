@@ -6,6 +6,7 @@
   "main": "server.js",
   "scripts": {
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "test:unit": "jest tests/auth/auth.unit.test.js",
     "test:integration": "jest tests/auth/auth.integration.test.js",
     "test:auth:stress": "jest tests/auth/stress/auth.stress.test.js --runInBand",
@@ -46,6 +47,21 @@
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
-    }
+    },
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**",
+      "!**/coverage/**",
+      "!**/tests/**",
+      "!**/*.test.js",
+      "!**/*.spec.js",
+      "!**/jest.config.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
   }
 }
