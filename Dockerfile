@@ -27,9 +27,5 @@ USER nextjs
 # Expose the port the app runs on (adjust if different)
 EXPOSE 3000
 
-# Health check (optional)
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
-
 # Start the application
 CMD ["node", "app.js"]
