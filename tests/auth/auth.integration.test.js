@@ -3,6 +3,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import request from 'supertest';
 import express from 'express';
+import 'dotenv/config'; // Load environment variables
 import authRoute from '@/routes/auth.route.js';
 import { errorHandler, notFound } from '@/middlewares/error.js';
 import User from '@/models/users.model.js';

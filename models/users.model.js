@@ -121,7 +121,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
 // Instance method to generate password reset token
 userSchema.methods.generatePasswordResetToken = function() {
   const resetToken = crypto.randomBytes(32).toString('hex');
-  this.passwordResetToken = crypto.hash('sha256', resetToken).toString('hex');
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutes
   return resetToken;
 };
@@ -129,7 +129,7 @@ userSchema.methods.generatePasswordResetToken = function() {
 // Instance method to generate email verification token
 userSchema.methods.generateEmailVerificationToken = function() {
   const verificationToken = crypto.randomBytes(32).toString('hex');
-  this.emailVerificationToken = crypto.hash('sha256', verificationToken).toString('hex');
+  this.emailVerificationToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
   this.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
   return verificationToken;
 };
