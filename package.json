@@ -15,7 +15,7 @@
     "test:load:registration": "artillery run tests/auth/stress/artillery-registration-stress.yml",
     "test:load:login": "artillery run tests/auth/stress/artillery-login-stress.yml",
     "test:load:doctor": "artillery run tests/doctor/onboarding/stress/artillery-config.yml",
-    "test:load:doctor:login": "artillery run tests/doctor/onboarding/stress/artillery-login-stress.yml",
+    "test:doctor:login": "artillery run tests/doctor/onboarding/stress/artillery-login-stress.yml",
     "start": "nodemon app.js"
   },
   "author": "Ashrith Sai",
