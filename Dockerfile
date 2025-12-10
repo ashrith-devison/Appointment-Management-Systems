@@ -29,4 +29,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node healthcheck.js || exit 1
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "app.js"]
