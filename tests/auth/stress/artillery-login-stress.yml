@@ -1,0 +1,18 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 50
+      name: "Login stress test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Brute Force Login Attempts"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "target@example.com"
+            password: "wrongpass{{ $randomInt }}"

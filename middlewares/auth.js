@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/users.model.js';
 import ApiError from '../utils/ApiError.util.js';
+import redisCache from '../utils/redis.js';
 
 /**
  * Generate JWT access token
@@ -42,6 +43,12 @@ export const authenticate = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET || 'access_secret');
+
+    // Check if token is blacklisted
+    const isBlacklisted = await redisCache.get(`blacklist:${token}`);
+    if (isBlacklisted) {
+      throw ApiError.unauthorized('Token has been revoked');
+    }
 
     // Get user from database
     const user = await User.findById(decoded.id).select('-password');

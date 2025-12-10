@@ -1,8 +1,10 @@
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import User from '../models/users.model.js';
 import ApiError from '../utils/ApiError.util.js';
 import { sendEmail } from '../utils/email.js';
 import { generateAccessToken, generateRefreshToken } from '../middlewares/auth.js';
+import redisCache from '../utils/redis.js';
 
 /**
  * Register a new user
@@ -139,8 +141,15 @@ export const refreshToken = async (user) => {
 /**
  * Logout user
  * @param {Object} user - User object from middleware
+ * @param {string} token - Access token to blacklist
  */
-export const logout = async (user) => {
+export const logout = async (user, token) => {
+  // Blacklist the access token
+  const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET || 'access_secret');
+  const expiresIn = decoded.exp - Math.floor(Date.now() / 1000);
+  await redisCache.set(`blacklist:${token}`, 'true', expiresIn);
+
+  // Clear refresh token
   user.refreshToken = undefined;
   user.refreshTokenExpires = undefined;
   await user.save();

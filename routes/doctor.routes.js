@@ -11,7 +11,7 @@ import {
   getDoctorSlots,
   updateSlotStatus,
   bulkUpdateSlotStatus
-} from '../controllers/doctor/doctor.controller.js';
+} from '../controllers/doctor/index.js';
 import ApiResponse from '../utils/ApiResponse.util.js';
 
 const router = express.Router();

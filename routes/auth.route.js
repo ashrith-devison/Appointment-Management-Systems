@@ -64,7 +64,8 @@ router.post('/refresh', verifyRefreshToken, async (req, res, next) => {
 // @access  Private
 router.post('/logout', authenticate, async (req, res, next) => {
   try {
-    await logout(req.user);
+    const token = req.headers.authorization.split(' ')[1];
+    await logout(req.user, token);
     ApiResponse.success(null, 'Logged out successfully').send(res);
   } catch (error) {
     next(error);

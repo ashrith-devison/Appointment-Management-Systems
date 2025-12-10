@@ -1,0 +1,20 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 20
+      name: "Registration stress test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Mass User Registration"
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            name: "StressUser{{ $randomInt }}"
+            email: "stress{{ $randomInt }}@example.com"
+            password: "password123"
+            role: "patient"

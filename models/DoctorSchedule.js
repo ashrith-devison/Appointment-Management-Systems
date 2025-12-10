@@ -76,12 +76,6 @@ const doctorScheduleSchema = new mongoose.Schema({
 // Compound index to ensure one schedule per doctor per day
 doctorScheduleSchema.index({ doctorId: 1, dayOfWeek: 1 }, { unique: true });
 
-// Pre-save middleware to update the updatedAt field
-doctorScheduleSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
 // Virtual for available slots count
 doctorScheduleSchema.virtual('availableSlotsCount').get(function() {
   if (!this.startTime || !this.endTime) return 0;

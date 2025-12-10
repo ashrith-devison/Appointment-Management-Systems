@@ -1,0 +1,74 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Warm up phase"
+    - duration: 120
+      arrivalRate: 50
+      name: "High load phase"
+    - duration: 60
+      arrivalRate: 100
+      name: "Peak load phase"
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool down phase"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "User Registration Load Test"
+    weight: 30
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            name: "LoadTestUser{{ $randomInt }}"
+            email: "loadtest{{ $randomInt }}@example.com"
+            password: "password123"
+            role: "patient"
+          expect:
+            - statusCode: 201
+
+  - name: "User Login Load Test"
+    weight: 40
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "loadtest{{ $randomInt }}@example.com"
+            password: "password123"
+          expect:
+            - statusCode: 200
+
+  - name: "Password Reset Load Test"
+    weight: 15
+    flow:
+      - post:
+          url: "/auth/forgot-password"
+          json:
+            email: "loadtest{{ $randomInt }}@example.com"
+          expect:
+            - statusCode: 200
+
+  - name: "Brute Force Login Simulation"
+    weight: 10
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "admin@example.com"
+            password: "wrongpassword{{ $randomInt }}"
+          expect:
+            - statusCode: 401
+
+  - name: "Invalid Requests Load Test"
+    weight: 5
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            invalidField: "value"
+          expect:
+            - statusCode: 400

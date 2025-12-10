@@ -15,18 +15,22 @@ import {
   getUsers,
   updateUserRole,
   impersonateUser
-} from '../../controllers/auth.controller.js';
+} from '@/controllers/auth.controller.js';
 
 // Mock dependencies
-jest.mock('../../models/users.model.js');
-jest.mock('../../utils/ApiError.util.js');
-jest.mock('../../utils/email.js');
-jest.mock('../../middlewares/auth.js');
+jest.mock('@/models/users.model.js');
+jest.mock('@/utils/ApiError.util.js');
+jest.mock('@/utils/email.js');
+jest.mock('@/middlewares/auth.js');
+jest.mock('@/utils/redis.js');
+jest.mock('jsonwebtoken');
 
-import User from '../../models/users.model.js';
-import ApiError from '../../utils/ApiError.util.js';
-import { sendEmail } from '../../utils/email.js';
-import { generateAccessToken, generateRefreshToken } from '../../middlewares/auth.js';
+import User from '@/models/users.model.js';
+import ApiError from '@/utils/ApiError.util.js';
+import { sendEmail } from '@/utils/email.js';
+import { generateAccessToken, generateRefreshToken } from '@/middlewares/auth.js';
+import redisCache from '@/utils/redis.js';
+import jwt from 'jsonwebtoken';
 
 describe('Auth Controller', () => {
   beforeEach(() => {
@@ -190,9 +194,15 @@ describe('Auth Controller', () => {
         refreshTokenExpires: new Date(),
         save: jest.fn()
       };
+      const token = 'accessToken';
 
-      await logout(user);
+      jwt.verify.mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 3600 });
+      redisCache.set.mockResolvedValue();
 
+      await logout(user, token);
+
+      expect(jwt.verify).toHaveBeenCalledWith(token, expect.any(String));
+      expect(redisCache.set).toHaveBeenCalledWith(`blacklist:${token}`, 'true', expect.any(Number));
       expect(user.refreshToken).toBeUndefined();
       expect(user.refreshTokenExpires).toBeUndefined();
       expect(user.save).toHaveBeenCalled();
@@ -780,9 +790,15 @@ describe('Auth Controller', () => {
           refreshTokenExpires: new Date(),
           save: jest.fn()
         };
+        const token = 'accessToken';
 
-        await logout(user);
+        jwt.verify.mockReturnValue({ exp: Math.floor(Date.now() / 1000) + 3600 });
+        redisCache.set.mockResolvedValue();
 
+        await logout(user, token);
+
+        expect(jwt.verify).toHaveBeenCalledWith(token, expect.any(String));
+        expect(redisCache.set).toHaveBeenCalledWith(`blacklist:${token}`, 'true', expect.any(Number));
         expect(user.refreshToken).toBeUndefined();
         expect(user.refreshTokenExpires).toBeUndefined();
       });

@@ -1,0 +1,131 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up phase"
+    - duration: 120
+      arrivalRate: 20
+      name: "Medium load phase"
+    - duration: 60
+      arrivalRate: 50
+      name: "High load phase"
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool down phase"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Doctor Profile Update Load Test"
+    weight: 25
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 9) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - put:
+          url: "/doctor/profile"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            name: "Dr. LoadTest Doctor {{ $randomInt }}"
+            doctorProfile:
+              specialization: "Cardiology"
+              experience: "{{ $randomInt(1, 20) }}"
+              hospital: "LoadTest Hospital {{ $randomInt }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Doctor Schedule Creation Load Test"
+    weight: 25
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 9) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - post:
+          url: "/doctor/schedule"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            dayOfWeek: "{{ $randomString(['monday', 'tuesday', 'wednesday', 'thursday', 'friday']) }}"
+            startTime: "09:00"
+            endTime: "17:00"
+            slotDuration: 30
+          expect:
+            - statusCode: [201, 409]
+
+  - name: "Doctor Slots Generation Load Test"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 9) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/schedule"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          capture:
+            json: "$.data.schedules[0]._id"
+            as: "scheduleId"
+      - post:
+          url: "/doctor/slots/generate"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            scheduleId: "{{ scheduleId }}"
+            startDate: "2024-01-01"
+            endDate: "2024-01-07"
+          expect:
+            - statusCode: 200
+
+  - name: "Doctor Slots Retrieval Load Test"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 9) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Doctor Profile Retrieval Load Test"
+    weight: 10
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 9) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/profile"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200

@@ -6,6 +6,15 @@
   "main": "server.js",
   "scripts": {
     "test": "jest",
+    "test:unit": "jest tests/auth/auth.unit.test.js",
+    "test:integration": "jest tests/auth/auth.integration.test.js",
+    "test:auth:stress": "jest tests/auth/stress/auth.stress.test.js --runInBand",
+    "test:doctor:stress": "jest tests/doctor/onboarding/stress/onboard.stress.test.js --runInBand",
+    "test:load": "artillery run tests/auth/stress/artillery-config.yml",
+    "test:load:registration": "artillery run tests/auth/stress/artillery-registration-stress.yml",
+    "test:load:login": "artillery run tests/auth/stress/artillery-login-stress.yml",
+    "test:load:doctor": "artillery run tests/doctor/onboarding/stress/artillery-config.yml",
+    "test:load:doctor:login": "artillery run tests/doctor/onboarding/stress/artillery-login-stress.yml",
     "start": "nodemon app.js"
   },
   "author": "Ashrith Sai",
@@ -26,10 +35,17 @@
   "devDependencies": {
     "@babel/core": "^7.28.5",
     "@babel/preset-env": "^7.28.5",
+    "artillery": "^2.0.27",
+    "autocannon": "^8.0.0",
     "jest": "^30.2.0",
-    "nodemon": "^3.1.11"
+    "mongodb-memory-server": "^10.4.1",
+    "nodemon": "^3.1.11",
+    "supertest": "^7.1.4"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1"
+    }
   }
 }

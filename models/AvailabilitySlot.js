@@ -77,12 +77,6 @@ availabilitySlotSchema.index({ doctorId: 1, date: 1, startTime: 1 });
 availabilitySlotSchema.index({ doctorId: 1, status: 1 });
 availabilitySlotSchema.index({ date: 1, status: 1 });
 
-// Pre-save middleware to update the updatedAt field
-availabilitySlotSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
 // Static method to get available slots for a doctor on a specific date
 availabilitySlotSchema.statics.getAvailableSlots = function(doctorId, date) {
   return this.find({
