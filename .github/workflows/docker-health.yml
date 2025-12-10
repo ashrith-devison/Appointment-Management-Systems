@@ -34,8 +34,6 @@ jobs:
         docker run -d --name test-container \
           -p 3000:3000 \
           -e NODE_ENV=test \
-          -e MONGODB_URI=mongodb://host.docker.internal:27017/test \
-          -e REDIS_URL=redis://host.docker.internal:6379 \
           backend-core:test
 
         echo "Waiting for application to start..."
@@ -46,6 +44,7 @@ jobs:
           fi
           if [ $i -eq 30 ]; then
             echo "❌ Health check failed after 30 attempts"
+            echo "Container logs:"
             docker logs test-container
             docker stop test-container
             docker rm test-container
@@ -110,7 +109,7 @@ jobs:
         output: 'trivy-docker-results.sarif'
 
     - name: Upload Trivy results to GitHub Security tab
-      uses: github/codeql-action/upload-sarif@v2
+      uses: github/codeql-action/upload-sarif@v3
       if: always()
       with:
         sarif_file: 'trivy-docker-results.sarif'

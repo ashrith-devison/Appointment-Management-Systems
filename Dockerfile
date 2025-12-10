@@ -13,6 +13,9 @@ RUN npm ci --only=production
 # Copy application code
 COPY . .
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Create a non-root user for security
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
@@ -26,7 +29,7 @@ EXPOSE 3000
 
 # Health check (optional)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node healthcheck.js || exit 1
+  CMD curl -f http://localhost:3000/health || exit 1
 
 # Start the application
 CMD ["node", "app.js"]
