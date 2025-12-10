@@ -185,6 +185,10 @@ export const updateSlotStatus = async (user, slotId, action, reason = '') => {
   }
 
   if (action === 'block') {
+    if (!reason || reason.trim() === '') {
+      throw ApiError.badRequest('Reason is required when blocking a slot');
+    }
+
     if (slot.status === 'booked') {
       throw ApiError.badRequest('Cannot block a booked slot');
     }

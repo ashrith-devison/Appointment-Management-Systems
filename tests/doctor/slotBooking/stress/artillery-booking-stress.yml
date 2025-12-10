@@ -1,0 +1,39 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 30
+      arrivalRate: 20
+      name: "Concurrent booking stress test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Concurrent Slot Booking Attempts"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "patient{{ $randomInt(0, 19) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            status: "available"
+            limit: 5
+          capture:
+            json: "$.data.slots[{{ $randomInt(0, 4) }}]._id"
+            as: "slotId"
+      - post:
+          url: "/patient/appointments/book/{{ slotId }}"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            reason: "Concurrent booking test {{ $randomInt }}"
+          expect:
+            - statusCode: [201, 409]

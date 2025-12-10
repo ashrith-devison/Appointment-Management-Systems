@@ -1,0 +1,200 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up phase"
+    - duration: 120
+      arrivalRate: 20
+      name: "Medium load phase"
+    - duration: 60
+      arrivalRate: 50
+      name: "High load phase"
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool down phase"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Doctor Slot Generation Load Test"
+    weight: 15
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 4) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/schedule"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          capture:
+            json: "$.data.schedules[0]._id"
+            as: "scheduleId"
+      - post:
+          url: "/doctor/slots/generate"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            scheduleId: "{{ scheduleId }}"
+            startDate: "2025-12-{{ $randomInt(10, 16) }}"
+            endDate: "2025-12-{{ $randomInt(10, 16) }}"
+            overrideExisting: false
+          expect:
+            - statusCode: 200
+
+  - name: "Doctor Slots Retrieval Load Test"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 4) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            status: "available"
+            limit: 20
+          expect:
+            - statusCode: 200
+
+  - name: "Patient Appointment Booking Load Test"
+    weight: 25
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "patient{{ $randomInt(0, 19) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            status: "available"
+            limit: 10
+          capture:
+            json: "$.data.slots[0]._id"
+            as: "slotId"
+      - post:
+          url: "/patient/appointments/book/{{ slotId }}"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            reason: "Load test booking {{ $randomInt }}"
+          expect:
+            - statusCode: [201, 409]
+
+  - name: "Doctor Slot Management Load Test"
+    weight: 15
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 4) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            status: "available"
+            limit: 5
+          capture:
+            json: "$.data.slots[0]._id"
+            as: "slotId"
+      - put:
+          url: "/doctor/slots/{{ slotId }}/status"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            action: "block"
+            reason: "Load test block {{ $randomInt }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Bulk Slot Operations Load Test"
+    weight: 10
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 4) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            status: "available"
+            limit: 10
+          capture:
+            json: "$.data.slots"
+            as: "slots"
+      - post:
+          url: "/doctor/slots/bulk/status"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            slotUpdates: |
+              {{ slots.map(slot => ({ slotId: slot._id, action: 'block', reason: 'Bulk load test' })) }}
+          expect:
+            - statusCode: 200
+
+  - name: "Patient Appointment History Load Test"
+    weight: 10
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "patient{{ $randomInt(0, 19) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/patient/appointments"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Invalid Booking Attempts Load Test"
+    weight: 5
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "patient{{ $randomInt(0, 19) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - post:
+          url: "/patient/appointments/book/invalid-slot-id"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            reason: "Invalid booking test"
+          expect:
+            - statusCode: 404

@@ -1,0 +1,44 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 45
+      arrivalRate: 10
+      name: "Bulk operations stress test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Bulk Slot Blocking Operations"
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 4) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            status: "available"
+            limit: 20
+          capture:
+            json: "$.data.slots"
+            as: "slots"
+      - post:
+          url: "/doctor/slots/bulk/status"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            slotUpdates: |
+              {{ slots.slice(0, 10).map((slot, index) => ({
+                slotId: slot._id,
+                action: index % 2 === 0 ? 'block' : 'unblock',
+                reason: index % 2 === 0 ? 'Bulk block test ' + index : undefined
+              })) }}
+          expect:
+            - statusCode: 200
