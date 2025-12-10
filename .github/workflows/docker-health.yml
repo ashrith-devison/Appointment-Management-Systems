@@ -1,0 +1,47 @@
+name: Docker Health Check
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  docker-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Build Docker image
+      run: docker build -t backend-core-test .
+
+    - name: Run Docker container
+      run: |
+        docker run -d --name test-container -p 3000:3000 backend-core-test
+        echo "Waiting for container to start..."
+        sleep 10
+
+    - name: Check if container is running
+      run: |
+        if [ "$(docker ps -q -f name=test-container)" ]; then
+            echo "✅ Container is running successfully"
+        else
+            echo "❌ Container failed to start"
+            docker logs test-container
+            exit 1
+        fi
+
+    - name: Test health endpoint (if available)
+      run: |
+        if curl -f http://localhost:3000/health || curl -f http://localhost:3000/; then
+            echo "✅ Application is responding"
+        else
+            echo "⚠️  Health check endpoint not available, but container is running"
+        fi
+
+    - name: Cleanup
+      run: |
+        docker stop test-container
+        docker rm test-container
