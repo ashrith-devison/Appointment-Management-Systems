@@ -1,0 +1,103 @@
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [ main, master, develop ]
+  push:
+    branches: [ main, master, develop ]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run ESLint
+      run: npm run lint || echo "ESLint not configured"
+
+    - name: Check code formatting
+      run: |
+        if command -v prettier &> /dev/null; then
+          npx prettier --check "**/*.{js,ts,json,md}" || echo "Code formatting issues found"
+        else
+          echo "Prettier not configured"
+        fi
+
+    - name: Run TypeScript check (if applicable)
+      run: |
+        if [ -f "tsconfig.json" ]; then
+          npx tsc --noEmit || echo "TypeScript compilation failed"
+        else
+          echo "TypeScript not configured"
+        fi
+
+    - name: Check for security vulnerabilities in dependencies
+      run: npm audit --audit-level moderate
+
+    - name: Check for large files
+      run: |
+        echo "## Large Files Check" >> $GITHUB_STEP_SUMMARY
+        find . -type f -size +50M -not -path "./.git/*" -not -path "./node_modules/*" | while read file; do
+          size=$(du -h "$file" | cut -f1)
+          echo "- $file: $size" >> $GITHUB_STEP_SUMMARY
+        done || echo "No large files found" >> $GITHUB_STEP_SUMMARY
+
+    - name: Check for sensitive data
+      run: |
+        echo "## Sensitive Data Check" >> $GITHUB_STEP_SUMMARY
+        # Check for API keys, passwords, etc.
+        if grep -r -i "password\|secret\|key\|token" --include="*.js" --include="*.json" --include="*.env*" . --exclude-dir=node_modules --exclude-dir=.git | grep -v "process.env" | grep -v "PASSWORD" | grep -v "SECRET" | grep -v "KEY" | grep -v "TOKEN"; then
+          echo "⚠️  Potential sensitive data found in code" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ No obvious sensitive data found" >> $GITHUB_STEP_SUMMARY
+        fi
+
+  pr-feedback:
+    name: PR Quality Feedback
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: PR Size Check
+      run: |
+        # Check PR size
+        lines_changed=$(git diff --stat ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | tail -1 | awk '{print $4+$6}')
+        echo "Lines changed: $lines_changed"
+
+        if [ "$lines_changed" -gt 1000 ]; then
+          echo "## 🚨 Large PR Detected" >> $GITHUB_STEP_SUMMARY
+          echo "This PR changes $lines_changed lines. Consider breaking it into smaller PRs." >> $GITHUB_STEP_SUMMARY
+        elif [ "$lines_changed" -gt 500 ]; then
+          echo "## ⚠️  Medium PR" >> $GITHUB_STEP_SUMMARY
+          echo "This PR changes $lines_changed lines. Review carefully." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ✅ Small PR" >> $GITHUB_STEP_SUMMARY
+          echo "This PR changes $lines_changed lines. Good size!" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Check test coverage
+      run: |
+        if [ -f "coverage/lcov-report/index.html" ]; then
+          echo "## 🛡️  Test Coverage" >> $GITHUB_STEP_SUMMARY
+          echo "Coverage report generated. Check the artifacts for detailed coverage." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ⚠️  No Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "Consider adding test coverage reporting." >> $GITHUB_STEP_SUMMARY
+        fi

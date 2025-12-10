@@ -1,0 +1,71 @@
+config:
+  target: 'http://localhost:3000'
+  phases:
+    - duration: 90
+      arrivalRate: 25
+      name: "Database performance stress test"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+
+scenarios:
+  - name: "Concurrent Slot Queries"
+    weight: 40
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 4) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            limit: 50
+            page: "{{ $randomInt(1, 3) }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Patient History Queries"
+    weight: 30
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "patient{{ $randomInt(0, 19) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/patient/appointments"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          expect:
+            - statusCode: 200
+
+  - name: "Filtered Slot Queries"
+    weight: 30
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "doctor{{ $randomInt(0, 4) }}@example.com"
+            password: "password123"
+          capture:
+            json: "$.data.tokens.accessToken"
+            as: "token"
+      - get:
+          url: "/doctor/slots"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          qs:
+            status: "{{ $randomString(['available', 'booked', 'blocked']) }}"
+            date: "2025-12-{{ $randomInt(10, 16) }}"
+            limit: 20
+          expect:
+            - statusCode: 200

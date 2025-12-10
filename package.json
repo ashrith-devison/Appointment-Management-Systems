@@ -6,6 +6,7 @@
   "main": "server.js",
   "scripts": {
     "test": "jest",
+    "test:coverage": "jest --coverage",
     "test:unit": "jest tests/auth/auth.unit.test.js",
     "test:integration": "jest tests/auth/auth.integration.test.js",
     "test:auth:stress": "jest tests/auth/stress/auth.stress.test.js --runInBand",
@@ -14,7 +15,7 @@
     "test:load:registration": "artillery run tests/auth/stress/artillery-registration-stress.yml",
     "test:load:login": "artillery run tests/auth/stress/artillery-login-stress.yml",
     "test:load:doctor": "artillery run tests/doctor/onboarding/stress/artillery-config.yml",
-    "test:load:doctor:login": "artillery run tests/doctor/onboarding/stress/artillery-login-stress.yml",
+    "test:doctor:login": "artillery run tests/doctor/onboarding/stress/artillery-login-stress.yml",
     "start": "nodemon app.js"
   },
   "author": "Ashrith Sai",
@@ -46,6 +47,21 @@
     "testEnvironment": "node",
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/$1"
-    }
+    },
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!**/node_modules/**",
+      "!**/coverage/**",
+      "!**/tests/**",
+      "!**/*.test.js",
+      "!**/*.spec.js",
+      "!**/jest.config.js"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ]
   }
 }

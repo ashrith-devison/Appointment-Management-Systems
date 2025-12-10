@@ -1,7 +1,7 @@
 # Makefile for Node.js Backend Project
 # Supports GitHub Actions, Docker, and Automation
 
-.PHONY: help install test build run clean docker-build docker-run docker-stop lint format ci deploy
+.PHONY: help install test test-unit test-integration test-stress build run clean docker-build docker-run docker-stop lint format ci deploy release security-scan maintenance
 
 # Default target
 help:
@@ -19,7 +19,10 @@ help:
 	@echo "  docker-stop   - Stop Docker container"
 	@echo "  lint          - Run linting"
 	@echo "  format        - Format code"
-	@echo "  ci            - Run CI pipeline"
+	@echo "  ci            - Run CI pipeline locally"
+	@echo "  release       - Create a new release"
+	@echo "  security-scan - Run security scanning"
+	@echo "  maintenance   - Run maintenance tasks"
 	@echo "  deploy        - Deploy application"
 
 # Install dependencies
@@ -76,8 +79,28 @@ lint:
 format:
 	npm run format
 
-# CI pipeline (for GitHub Actions)
-ci: install lint test
+# CI pipeline (for local testing)
+ci: install lint test docker-build
+
+# Release management
+release:
+	@echo "To create a release:"
+	@echo "1. Update version in package.json"
+	@echo "2. Commit changes"
+	@echo "3. Create git tag: git tag v1.2.3"
+	@echo "4. Push tag: git push origin v1.2.3"
+	@echo "5. GitHub Actions will create the release automatically"
+
+# Security scanning
+security-scan:
+	npm audit
+	@echo "For full security scan, run GitHub Actions workflow"
+
+# Maintenance tasks
+maintenance:
+	@echo "Running maintenance tasks..."
+	npm outdated
+	@echo "For full maintenance, run GitHub Actions workflow"
 
 # Deploy (placeholder - customize based on your deployment strategy)
 deploy:

@@ -5,6 +5,15 @@ router.get('/hello', (req, res) => {
   res.json({ message: 'Hello, World!' });
 });
 
+router.get('/health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: process.env.npm_package_version || '1.0.0'
+  });
+});
+
 router.get('/hello/:name', (req, res) => {
   const { name } = req.params;
   res.json({ message: `Hello, ${name}!` });
@@ -120,6 +129,44 @@ const swaggerConfig = {
                     message: {
                       type: 'string',
                       example: 'Hello, John!'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    '/health': {
+      get: {
+        summary: 'Health check',
+        description: 'Returns the health status of the application',
+        tags: ['Health'],
+        responses: {
+          200: {
+            description: 'Application is healthy',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    status: {
+                      type: 'string',
+                      example: 'healthy'
+                    },
+                    timestamp: {
+                      type: 'string',
+                      format: 'date-time',
+                      example: '2023-12-10T10:00:00.000Z'
+                    },
+                    uptime: {
+                      type: 'number',
+                      example: 123.456
+                    },
+                    version: {
+                      type: 'string',
+                      example: '1.0.0'
                     }
                   }
                 }

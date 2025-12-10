@@ -4,12 +4,20 @@ import {
   getAllDoctors,
   getDoctorById,
   updateDoctorByAdmin,
+  impersonateDoctor
+} from '../controllers/admin/doctor/index.js';
+import {
   getDoctorSchedule,
   createDoctorScheduleByAdmin,
-  updateDoctorScheduleByAdmin,
+  updateDoctorScheduleByAdmin
+} from '../controllers/admin/schedule/index.js';
+import {
   getDoctorSlotsByAdmin,
   generateDoctorSlotsByAdmin
-} from '../controllers/admin/doctorManagement.controller.js';
+} from '../controllers/admin/slots/index.js';
+import {
+  impersonateStaff
+} from '../controllers/admin/staff/index.js';
 import ApiResponse from '../utils/ApiResponse.util.js';
 
 const router = express.Router();
@@ -88,6 +96,25 @@ router.post('/doctors/:doctorId/slots/generate', async (req, res, next) => {
   try {
     const result = await generateDoctorSlotsByAdmin(req.params.doctorId, req.body);
     ApiResponse.success(result, 'Doctor slots generated successfully').send(res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Impersonation routes
+router.post('/impersonate/doctor/:doctorId', async (req, res, next) => {
+  try {
+    const result = await impersonateDoctor(req.params.doctorId);
+    ApiResponse.success(result, 'Impersonation successful').send(res);
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/impersonate/staff/:staffId', async (req, res, next) => {
+  try {
+    const result = await impersonateStaff(req.params.staffId);
+    ApiResponse.success(result, 'Impersonation successful').send(res);
   } catch (error) {
     next(error);
   }
